@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "827314078865",
+    "project_id": "rojgarsetu-d2cbc",
+    "storage_bucket": "rojgarsetu-d2cbc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827314078865:android:0e900750abd3c4a1cb6b30",
+        "android_client_info": {
+          "package_name": "com.example.RojgarSetu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbM16xjesb8fpHY0tk6zbaKWLoBc5UeuY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
