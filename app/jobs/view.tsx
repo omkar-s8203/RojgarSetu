@@ -23,15 +23,17 @@ export default function JobView() {
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(
     null
   );
+  const addAppliedJob = userStore((state) => state.addAppliedJob);
 
   if (!job) return null;
 
   const hasApplied = job.candidates?.includes(userId || "");
 
   const handleApply = async () => {
-    if (!userId) return;
+    if (!userId || !job) return;
     try {
       await applyToJob(job.id, userId);
+      await addAppliedJob(job.id);
       alert("Successfully applied to job!");
     } catch (error) {
       alert("Error applying to job");

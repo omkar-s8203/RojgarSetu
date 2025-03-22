@@ -1,5 +1,10 @@
 import { auth, firestore, messaging } from "@/firebase";
-import { doc, getDoc, updateDoc } from "@react-native-firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+} from "@react-native-firebase/firestore";
 import { create } from "zustand";
 
 export interface UserStore {
@@ -8,6 +13,7 @@ export interface UserStore {
   role: "employee" | "employer";
   skills: string[];
   locations: string[];
+  appliedJobs: string[];
 
   hasInitialized: boolean;
   initialize: () => Promise<void>;
@@ -15,6 +21,7 @@ export interface UserStore {
     skills: string[],
     locations: string[]
   ) => Promise<void>;
+  addAppliedJob: (jobId: string) => Promise<void>;
 }
 
 export const userStore = create<UserStore>((set) => ({
@@ -23,6 +30,7 @@ export const userStore = create<UserStore>((set) => ({
   role: "employee",
   skills: [],
   locations: [],
+  appliedJobs: [],
 
   hasInitialized: false,
   initialize: async () => {
@@ -38,6 +46,7 @@ export const userStore = create<UserStore>((set) => ({
       role: userData.role,
       skills: userData.skills,
       locations: userData.locations,
+      appliedJobs: userData.appliedJobs || [],
     });
 
     set({ hasInitialized: true });
@@ -52,5 +61,16 @@ export const userStore = create<UserStore>((set) => ({
     [...skills, ...locations].forEach((topic) =>
       messaging.subscribeToTopic(topic)
     );
+  },
+  addAppliedJob: async (jobId: string) => {
+    if (!auth.currentUser) return;
+
+    const userRef = doc(firestore, "users", auth.currentUser.uid);
+    set((state) => ({
+      appliedJobs: [...state.appliedJobs, jobId],
+    }));
+    await updateDoc(userRef, {
+      appliedJobs: arrayUnion(jobId),
+    });
   },
 }));

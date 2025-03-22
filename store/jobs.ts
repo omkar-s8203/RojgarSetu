@@ -45,6 +45,7 @@ interface JobsStore {
     skills: string[],
     location: string
   ) => Promise<void>;
+  refresh: () => Promise<void>;
 }
 
 export const jobsStore = create<JobsStore>((set, get) => ({
@@ -198,5 +199,41 @@ export const jobsStore = create<JobsStore>((set, get) => ({
       skills: Array.from(currentSkills),
       locations: Array.from(currentLocations),
     });
+  },
+
+  refresh: async () => {
+    const snapshot = await getDocs(collection(firestore, "jobs"));
+    const jobs = snapshot.docs
+      .map((doc) => {
+        if (doc.id === "data") return;
+        return { id: doc.id, ...doc.data() } as Job;
+      })
+      .filter(Boolean) as Job[];
+
+    const { selectedSkills, selectedLocations, searchQuery } = get();
+    let filtered = [...jobs];
+
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (job) =>
+          job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          job.companyName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (selectedSkills.length > 0) {
+      filtered = filtered.filter((job) =>
+        job.skills.some((skill) => selectedSkills.includes(skill))
+      );
+    }
+
+    if (selectedLocations.length > 0) {
+      filtered = filtered.filter((job) =>
+        selectedLocations.includes(job.location)
+      );
+    }
+
+    set({ jobs, filteredJobs: filtered });
   },
 }));

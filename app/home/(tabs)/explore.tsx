@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { userStore } from "@/store/user";
@@ -16,7 +17,12 @@ import { router } from "expo-router";
 import { auth } from "@/firebase";
 
 export default function Explore() {
-  const { role, skills: userSkills, locations: userLocations } = userStore();
+  const {
+    role,
+    skills: userSkills,
+    locations: userLocations,
+    appliedJobs,
+  } = userStore();
   const {
     filteredJobs,
     initialize,
@@ -25,8 +31,11 @@ export default function Explore() {
     selectedLocations,
     setSearchQuery,
     getEmployerJobs,
+    refresh,
   } = jobsStore();
   const [employerView, setEmployerView] = useState(false);
+  const [showAppliedOnly, setShowAppliedOnly] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     initialize();
@@ -46,10 +55,20 @@ export default function Explore() {
     setFilter(selectedSkills, newLocations);
   };
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, []);
+
   const displayJobs =
     role === "employer" && employerView
       ? getEmployerJobs(auth.currentUser?.uid || "")
       : filteredJobs;
+
+  const filteredDisplayJobs = showAppliedOnly
+    ? displayJobs.filter((job) => appliedJobs.includes(job.id))
+    : displayJobs;
 
   return (
     <View style={styles.container}>
@@ -61,7 +80,7 @@ export default function Explore() {
           placeholder="Search jobs..."
           onChangeText={setSearchQuery}
         />
-        {role === "employer" && (
+        {role === "employer" ? (
           <TouchableOpacity
             style={[styles.filterChip, employerView && styles.filterChipActive]}
             onPress={() => setEmployerView(!employerView)}
@@ -75,12 +94,35 @@ export default function Explore() {
               My Jobs
             </Text>
           </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.filterChip,
+              showAppliedOnly && styles.filterChipActive,
+            ]}
+            onPress={() => setShowAppliedOnly(!showAppliedOnly)}
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                showAppliedOnly && styles.filterChipTextActive,
+              ]}
+            >
+              Applied Jobs
+            </Text>
+          </TouchableOpacity>
         )}
       </View>
 
       {role === "employee" && (
         <View style={styles.filtersContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
             {userSkills.map((skill) => (
               <TouchableOpacity
                 key={skill}
@@ -134,7 +176,7 @@ export default function Explore() {
       )}
 
       <ScrollView style={styles.jobsList}>
-        {displayJobs.map((job) => (
+        {filteredDisplayJobs.map((job) => (
           <TouchableOpacity
             key={job.id}
             style={styles.jobCard}
@@ -189,13 +231,22 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#f0f0f0",
     marginHorizontal: 6,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   filterChipActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterChipText: {
     color: "#666",
     fontSize: 14,
+    fontWeight: "500",
   },
   filterChipTextActive: {
     color: "white",
