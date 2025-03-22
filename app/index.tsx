@@ -8,6 +8,7 @@ import {
 import { auth } from "@/firebase";
 import { colors } from "@/constants/colors";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { userStore } from "@/store/user";
 
 export default function Index() {
   useEffect(() => {
@@ -17,26 +18,36 @@ export default function Index() {
 
     prepare();
 
-    onAuthStateChanged(auth, async (user: FirebaseAuthTypes.User) => {
-      SplashScreen.hideAsync();
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (user: FirebaseAuthTypes.User) => {
+        SplashScreen.hideAsync();
 
-      const token = await user.getIdToken(true);
-      if (!token) {
-        if (user) {
-          await auth.signOut();
+        if (!user) {
+          router.replace("/auth");
         }
 
-        router.replace("/auth");
-        return;
-      }
+        try {
+          const token = await user.getIdToken(true);
+          if (!token) {
+            if (user) await auth.signOut();
 
-      if (!user) {
-        router.replace("/auth");
-        return;
-      }
+            router.replace("/auth");
+          }
 
-      router.replace("/home");
-    });
+          if (!userStore.getState().hasInitialized)
+            await userStore.getState().initialize();
+
+          router.replace("/home");
+        } catch (error) {
+          router.replace("/auth");
+        }
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return (

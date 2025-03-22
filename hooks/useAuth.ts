@@ -7,6 +7,7 @@ import {
   getFirebaseErrorMessage,
 } from "../utils/validation";
 import { doc, setDoc } from "@react-native-firebase/firestore";
+import { userStore } from "@/store/user";
 
 interface AuthError {
   email?: string;
@@ -60,7 +61,11 @@ export const useAuth = () => {
     }
   };
 
-  const handleSignIn = async (email: string, password: string) => {
+  const handleSignIn = async (
+    email: string,
+    password: string,
+    role: "employee" | "employer" = "employee"
+  ) => {
     setErrors({});
 
     if (!validateEmail(email) || !validatePassword(password)) {
@@ -74,6 +79,19 @@ export const useAuth = () => {
     setLoading(true);
     try {
       const user = await signIn(email, password);
+      await userStore.getState().initialize();
+
+      if (role !== userStore.getState().role) {
+        setLoading(false);
+        setErrors({
+          general: "Invalid role selected",
+        });
+
+        await signOut();
+
+        return null;
+      }
+
       setLoading(false);
       return user;
     } catch (error: any) {

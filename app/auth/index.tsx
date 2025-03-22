@@ -11,14 +11,19 @@ import React, { useState, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../hooks/useAuth";
 import { TextInput } from "../../components/TextInput";
+import { router } from "expo-router";
 
-const LoginTab = () => {
+const LoginTab = ({ userType }: { userType: "employee" | "employer" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { handleSignIn, loading, errors } = useAuth();
 
   const onLogin = async () => {
-    await handleSignIn(email, password);
+    const user = await handleSignIn(email, password, userType);
+
+    if (user) {
+      router.replace("/home");
+    }
   };
 
   return (
@@ -67,7 +72,11 @@ const SignupTab = ({ userType }: { userType: "employee" | "employer" }) => {
   const { handleSignUp, loading, errors } = useAuth();
 
   const onSignup = async () => {
-    await handleSignUp(fullName, email, password, userType);
+    const user = await handleSignUp(fullName, email, password, userType);
+
+    if (user) {
+      router.replace("/home");
+    }
   };
 
   return (
@@ -199,7 +208,7 @@ export default function AuthScreen() {
           </TouchableOpacity>
         </View>
         {activeTab === "login" ? (
-          <LoginTab />
+          <LoginTab userType={userType} />
         ) : (
           <SignupTab userType={userType} />
         )}

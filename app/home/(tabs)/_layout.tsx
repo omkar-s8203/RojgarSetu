@@ -22,21 +22,6 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
-        options={{
-          tabBarIcon: (props) => (
-            <Ionicons
-              name={props.focused ? "home" : "home-outline"}
-              size={24}
-              color={props.color}
-            />
-          ),
-          tabBarLabel: (props) => (
-            <Text style={{ opacity: props.focused ? 1 : 0.7 }}>Home</Text>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="explore"
         options={{
           tabBarIcon: (props) => (

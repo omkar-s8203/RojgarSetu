@@ -1,6 +1,7 @@
 import { getApp } from "@react-native-firebase/app";
 import { getAuth } from "@react-native-firebase/auth";
 import { getFirestore } from "@react-native-firebase/firestore";
+import { userStore } from "./store/user";
 
 const app = getApp();
 
@@ -33,6 +34,7 @@ export const signIn = async (email: string, password: string) => {
 
 export const signOut = async () => {
   try {
+    userStore.getState().hasInitialized = false;
     await auth.signOut();
   } catch (error) {
     throw error;
