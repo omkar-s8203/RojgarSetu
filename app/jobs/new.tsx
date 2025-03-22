@@ -10,7 +10,7 @@ import React, { useState } from "react";
 import { router } from "expo-router";
 import { colors } from "@/constants/colors";
 import NavigationHeader from "@/components/NavigationHeader";
-import { firestore, auth } from "@/firebase";
+import { firestore, auth, messaging } from "@/firebase";
 import { addDoc, collection } from "@react-native-firebase/firestore";
 import { userStore } from "@/store/user";
 import { jobsStore } from "@/store/jobs";
@@ -34,7 +34,6 @@ export default function NewJob() {
     try {
       const skillsArray = skills.split(",").map((s) => s.trim());
 
-      // Update global skills and locations
       await jobsStore
         .getState()
         .updateGlobalSkillsAndLocations(skillsArray, location.trim());
@@ -64,6 +63,17 @@ export default function NewJob() {
       });
 
       router.back();
+
+      [...skillsArray, location.trim()].forEach((term) =>
+        messaging.sendMessage({
+          from: term,
+          fcmOptions: {},
+          notification: {
+            title: `New job: ${title}`,
+            body: `A new job has been posted in ${term}`,
+          },
+        })
+      );
     } catch (error) {
       alert("Error creating job");
     } finally {

@@ -1,4 +1,4 @@
-import { auth, firestore } from "@/firebase";
+import { auth, firestore, messaging } from "@/firebase";
 import { doc, getDoc, updateDoc } from "@react-native-firebase/firestore";
 import { create } from "zustand";
 
@@ -48,5 +48,9 @@ export const userStore = create<UserStore>((set) => ({
     const userRef = doc(firestore, "users", auth.currentUser.uid);
     await updateDoc(userRef, { skills, locations });
     set({ skills, locations });
+
+    [...skills, ...locations].forEach((topic) =>
+      messaging.subscribeToTopic(topic)
+    );
   },
 }));
